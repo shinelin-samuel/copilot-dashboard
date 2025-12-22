@@ -14,11 +14,15 @@ from langchain_core.messages import AIMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 load_dotenv()
 
 # Define the function that calls the model
 async def call_model(state: AgentState) -> Dict[str, List[AIMessage]]:
+    logger.info("Entering call_model")
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
@@ -103,7 +107,7 @@ builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph
 memory = MemorySaver()
-graph = builder.compile(name="powersim_agent")
+graph = builder.compile(name="powersim_agent", checkpointer=memory)
 
 if __name__ == "__main__":
     import asyncio
@@ -126,11 +130,13 @@ if __name__ == "__main__":
 
         # Stream the execution to see what's happening inside
         print("\n=== STARTING AGENT EXECUTION ===\n")
+        logger.info("\n=== STARTING AGENT EXECUTION ===\n")
 
         # Use astream to see intermediate steps
         async for chunk in graph.astream(input_data, config, stream_mode="updates"):
             for node_name, node_output in chunk.items():
                 print(f"\n--- OUTPUT FROM NODE: {node_name} ---")
+                logger.info(f"\n--- OUTPUT FROM NODE: {node_name} ---")
 
                 # Extract messages if they exist
                 if "messages" in node_output and node_output["messages"]:
@@ -138,30 +144,40 @@ if __name__ == "__main__":
 
                     # Print message content based on type
                     print(f"MESSAGE TYPE: {type(latest_message).__name__}")
+                    logger.info(f"MESSAGE TYPE: {type(latest_message).__name__}")
 
                     if hasattr(latest_message, "content") and latest_message.content:
                         print(f"CONTENT: {latest_message.content[:500]}...")
+                        logger.info(f"CONTENT: {latest_message.content[:500]}...")
 
                     # Print tool calls if present
                     if hasattr(latest_message, "tool_calls") and latest_message.tool_calls:
                         print(f"TOOL CALLS: {latest_message.tool_calls}")
+                        logger.info(f"TOOL CALLS: {latest_message.tool_calls}")
 
                     # Handle tool messages specifically
                     if hasattr(latest_message, "name") and hasattr(latest_message, "tool_call_id"):
                         print(f"TOOL: {latest_message.name}")
                         print(f"TOOL CALL ID: {latest_message.tool_call_id}")
+                        logger.info(f"TOOL: {latest_message.name}")
+                        logger.info(f"TOOL CALL ID: {latest_message.tool_call_id}")
                         if hasattr(latest_message, "content"):
                             print(f"RESULT: {latest_message.content[:500]}...")
+                            logger.info(f"RESULT: {latest_message.content[:500]}...")
 
                 print("-----------------------------------")
+                logger.info("-----------------------------------")
 
             print("\n==== CHUNK COMPLETE ====\n")
+            logger.info("\n==== CHUNK COMPLETE ====\n")
 
         # Get the final response
         final_response = await graph.ainvoke(input_data, config)
 
         print("\n=== FINAL RESPONSE ===\n")
+        logger.info("\n=== FINAL RESPONSE ===\n")
         print(final_response)
+        logger.info(final_response)
 
     # Run the async main function
     asyncio.run(main())
