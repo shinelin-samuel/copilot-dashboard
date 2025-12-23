@@ -77,6 +77,7 @@ builder.add_edge("__start__", "call_model")
 
 def route_model_output(state: SQLAgentState) -> Literal["__end__", "tools"]:
     """Determine the next node based on the model's output."""
+    logger.info("Entering route_model_output")
     last_message = state.messages[-1]
     if not isinstance(last_message, AIMessage):
         raise ValueError(f"Expected AIMessage in output edges, but got {type(last_message).__name__}")
@@ -129,13 +130,11 @@ if __name__ == "__main__":
         }
 
         # Stream the execution to see what's happening inside
-        print("\n=== STARTING AGENT EXECUTION ===\n")
         logger.info("\n=== STARTING AGENT EXECUTION ===\n")
 
         # Use astream to see intermediate steps
         async for chunk in graph.astream(input_data, config, stream_mode="updates"):
             for node_name, node_output in chunk.items():
-                print(f"\n--- OUTPUT FROM NODE: {node_name} ---")
                 logger.info(f"\n--- OUTPUT FROM NODE: {node_name} ---")
 
                 # Extract messages if they exist
@@ -143,40 +142,30 @@ if __name__ == "__main__":
                     latest_message = node_output["messages"][-1]
 
                     # Print message content based on type
-                    print(f"MESSAGE TYPE: {type(latest_message).__name__}")
                     logger.info(f"MESSAGE TYPE: {type(latest_message).__name__}")
 
                     if hasattr(latest_message, "content") and latest_message.content:
-                        print(f"CONTENT: {latest_message.content[:500]}...")
                         logger.info(f"CONTENT: {latest_message.content[:500]}...")
 
                     # Print tool calls if present
                     if hasattr(latest_message, "tool_calls") and latest_message.tool_calls:
-                        print(f"TOOL CALLS: {latest_message.tool_calls}")
                         logger.info(f"TOOL CALLS: {latest_message.tool_calls}")
 
                     # Handle tool messages specifically
                     if hasattr(latest_message, "name") and hasattr(latest_message, "tool_call_id"):
-                        print(f"TOOL: {latest_message.name}")
-                        print(f"TOOL CALL ID: {latest_message.tool_call_id}")
                         logger.info(f"TOOL: {latest_message.name}")
                         logger.info(f"TOOL CALL ID: {latest_message.tool_call_id}")
                         if hasattr(latest_message, "content"):
-                            print(f"RESULT: {latest_message.content[:500]}...")
                             logger.info(f"RESULT: {latest_message.content[:500]}...")
 
-                print("-----------------------------------")
                 logger.info("-----------------------------------")
 
-            print("\n==== CHUNK COMPLETE ====\n")
             logger.info("\n==== CHUNK COMPLETE ====\n")
 
         # Get the final response
         final_response = await graph.ainvoke(input_data, config)
 
-        print("\n=== FINAL RESPONSE ===\n")
         logger.info("\n=== FINAL RESPONSE ===\n")
-        print(final_response)
         logger.info(final_response)
 
     # Run the async main function

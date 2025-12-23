@@ -4,6 +4,9 @@ from typing import List
 from IPython.display import Image, display
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def parse_inf_file(inf_path: str) -> List[str]:
@@ -16,6 +19,7 @@ def parse_inf_file(inf_path: str) -> List[str]:
     Returns:
         List[str]: List of column descriptions in order
     """
+    logger.info("Entering parse_inf_file")
     column_names = []
     pgb_pattern = re.compile(r'PGB\(\d+\)\s+Output\s+Desc="([^"]+)"')
 
@@ -39,6 +43,7 @@ def save_graph_diagram(graph, filename="graph.png"):
         graph: The graph to be depicted.
         filename: The name of the file to save the graph as.
     """
+    logger.info("Entering save_graph_diagram")
     try:
         graph = graph.get_graph(xray=True).draw_mermaid_png()
         with open(filename, "wb") as f:
@@ -49,6 +54,7 @@ def save_graph_diagram(graph, filename="graph.png"):
 
 
 def print_stream(stream):
+    logger.info("Entering print_stream")
     for s in stream:
         message = s["messages"][-1]
         if isinstance(message, tuple):
@@ -63,5 +69,6 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
     Args:
         fully_specified_name (str): String in the format 'provider/model'.
     """
+    logger.info("Entering load_chat_model")
     provider, model = fully_specified_name.split("/", maxsplit=1)
     return init_chat_model(model, model_provider=provider)

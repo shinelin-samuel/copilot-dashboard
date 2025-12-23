@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, distinct, func
 from sqlalchemy.orm import Session
+from app.logger import get_logger
 
+logger = get_logger(__name__)
 from ..db.database import get_db
 from ..db.models import (
     Actor,
@@ -22,6 +24,7 @@ router = APIRouter()
 
 @router.get("/insights")
 async def get_insights(db: Session = Depends(get_db)):
+    logger.info("Entering get_insights")
     try:
         # TODO: Implement insights generation logic
         return {"status": "success", "insights": []}
@@ -31,6 +34,7 @@ async def get_insights(db: Session = Depends(get_db)):
 
 @router.get("/insights/top-films")
 async def get_top_films(limit: int = 10, db: Session = Depends(get_db)):
+    logger.info("Entering get_top_films")
     try:
         # Get top films by rental count
         top_films = (
@@ -66,6 +70,7 @@ async def get_top_films(limit: int = 10, db: Session = Depends(get_db)):
 
 @router.get("/insights/category-performance")
 async def get_category_performance(db: Session = Depends(get_db)):
+    logger.info("Entering get_category_performance")
     try:
         # Get performance metrics by category
         category_stats = (
@@ -100,6 +105,7 @@ async def get_category_performance(db: Session = Depends(get_db)):
 
 @router.get("/insights/customer-activity")
 async def get_customer_activity(limit: int = 10, db: Session = Depends(get_db)):
+    logger.info("Entering get_customer_activity")
     try:
         # Get most active customers
         active_customers = (
@@ -134,6 +140,7 @@ async def get_customer_activity(limit: int = 10, db: Session = Depends(get_db)):
 
 @router.get("/insights/store-performance")
 async def get_store_performance(db: Session = Depends(get_db)):
+    logger.info("Entering get_store_performance")
     try:
         # Get store performance metrics
         store_stats = (
@@ -167,6 +174,7 @@ async def get_store_performance(db: Session = Depends(get_db)):
 
 @router.get("/insights/actor-popularity")
 async def get_actor_popularity(limit: int = 10, db: Session = Depends(get_db)):
+    logger.info("Entering get_actor_popularity")
     try:
         # Get most popular actors based on film rentals
         popular_actors = (
@@ -202,6 +210,7 @@ async def get_actor_popularity(limit: int = 10, db: Session = Depends(get_db)):
 
 @router.get("/insights/sales-overview")
 async def get_sales_overview(db: Session = Depends(get_db)):
+    logger.info("Entering get_sales_overview")
     try:
         # Get monthly sales data for the past year
         sales_data = (
@@ -238,6 +247,7 @@ async def get_sales_overview(db: Session = Depends(get_db)):
 
 @router.get("/insights/regional-sales")
 async def get_regional_sales(db: Session = Depends(get_db)):
+    logger.info("Entering get_regional_sales")
     try:
         # Get sales data by country
         regional_data = (

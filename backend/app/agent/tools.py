@@ -11,6 +11,9 @@ from langchain_core.tools.base import InjectedToolCallId
 from langgraph.prebuilt import InjectedState
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing_extensions import Annotated
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Database path
 DB_PATH = Path(__file__).parent.parent.parent / "data" / "sqlite-sakila.db"
@@ -23,6 +26,7 @@ class SQLiteDatabase:
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def execute_query(self, query: str) -> pd.DataFrame:
         """Execute a SQL query with retry logic."""
+        logger.info("Entering execute_query")
         try:
             with sqlite3.connect(self.db_path) as conn:
                 return pd.read_sql_query(query, conn)
@@ -33,6 +37,7 @@ class SQLiteDatabase:
 
     def get_schema(self) -> Dict[str, List[str]]:
         """Get the database schema."""
+        logger.info("Entering get_schema")
         schema = {}
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -57,6 +62,7 @@ async def get_schema(
     state: Annotated[Any, InjectedState],
 ) -> str:
     """Get the database schema."""
+    logger.info("Entering @tool.get_schema")
     schema = db.get_schema()
     return json.dumps(schema, indent=2)
 
@@ -69,6 +75,7 @@ async def run_query(
     query: str,
 ) -> str:
     """Run a SQL query on the database with retry logic."""
+    logger.info("Entering @tool.run_query")
     await copilotkit_emit_state(config, {"progress": "Running query..."})
     try:
         result = db.execute_query(query)
