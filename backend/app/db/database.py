@@ -4,16 +4,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Get the absolute path to the data directory
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DATABASE_PATH = os.path.join(BASE_DIR, "data", "sqlite-sakila.db")
+# Build the SQLAlchemy database URL from the environment. Use psycopg driver for PostgreSQL.
+# Expected format: postgresql+psycopg://user:password@host:port/dbname
+DEFAULT_PG_URL = os.getenv("DEFAULT_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/copilot")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_PG_URL)
 
-# Ensure the data directory exists
-os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
-
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# Create engine for PostgreSQL (or whatever is provided in DATABASE_URL)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

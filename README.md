@@ -20,7 +20,7 @@ graph TB
 
     subgraph Backend["Backend (FastAPI)"]
         AG[LangGraph Agent]
-        DB[(SQLite Database)]
+        DB[(PostgreSQL Database)]
         API_R[FastAPI Routes]
     end
 
@@ -60,7 +60,7 @@ graph TB
 - **FastAPI**: High-performance API framework
 - **LangGraph**: For building AI agent workflows
 - **SQLAlchemy**: ORM for database interactions
-- **SQLite**: Local database storage
+- **PostgreSQL**: Local database storage
 
 ### Frontend
 - **Next.js**: React framework for production
@@ -105,7 +105,7 @@ docker-compose up --build
 
 ##### Prerequisites
 - Python 3.8+
-- SQLite3
+- PostgreSQL
 - UV package manager
 
 ##### Installation
@@ -121,7 +121,9 @@ uv pip install -r backend/requirements.txt
 ```
 
 ##### Database Setup
-The backend uses SQLite with the Sakila sample database. The database file will be automatically created in `backend/data/sqlite-sakila.db` when you first run the application.
+The backend uses PostgreSQL by default. The application will attempt to connect to the database specified in the `DATABASE_URL` environment variable (for example: `postgresql+psycopg://postgres:postgres@localhost:5432/copilot`).
+
+If you used the included Sakila SQLite scripts as a reference, you can adapt them to import into PostgreSQL, or use a different dataset. The `backend/data/sqlite-sakila-db/` folder contains the SQLite-oriented scripts and an example SQLite file; these are provided for reference only.
 
 ##### Running the Backend
 1. Start the FastAPI server:
@@ -205,7 +207,7 @@ InsightCopilot/
 │   │   │   └── insights.py  # Handles insights endpoints
 │   │   ├── db/
 │   │   │   ├── __init__.py
-│   │   │   ├── database.py  # SQLite connection and schema setup
+│   │   │   ├── database.py  # PostgreSQL connection and schema setup
 │   │   │   └── models.py    # SQLAlchemy ORM models for Sakila DB
 │   │   ├── agent/
 │   │   │   ├── __init__.py
@@ -219,7 +221,7 @@ InsightCopilot/
 │   │   └── utils/
 │   │       └── helpers.py   # Utility functions (data processing, query generation, etc.)
 │   ├── data/
-│   │   ├── sqlite-sakila.db   # Sample SQLite database
+│   │   ├── sqlite-sakila.db   # (optional) Sample Sakila DB / reference scripts
 │   │   └── README.txt        # Database documentation
 │   ├── tests/
 │   │   ├── test_api.py      # API endpoint tests
@@ -264,3 +266,4 @@ InsightCopilot/
 ├── docker-compose.yml       # Docker configuration for backend and frontend
 ├── LICENSE                  # Open-source license
 └── Makefile                 # Common project commands (setup, run, test)
+

@@ -12,6 +12,21 @@ services:
       - ./backend/data:/app/data
     environment:
       - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/copilot
+    networks:
+      - insight-network
+
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: copilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - insight-network
 
@@ -46,3 +61,4 @@ networks:
 
 volumes:
   pnpm-store:
+  pgdata:

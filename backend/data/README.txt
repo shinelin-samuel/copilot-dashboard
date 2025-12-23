@@ -36,12 +36,6 @@ Direct access to the MySQL Sakila database, which does not require installation 
 https://demo.phpmyadmin.net/master-config/
 
 ### Files Description
-The files in the sqlite-sakila-db folder are the script files which can be used to generate the SQLite version of the database.
-For convenience, the script files have already been run in cmd to generate the sqlite-sakila.db file, as follows:
+The `sqlite-sakila-db` folder contains SQL scripts used to generate the Sakila schema and data for SQLite. If you want to import the Sakila data into PostgreSQL for local development, you'll need to adapt these scripts for Postgres (types and certain pragmas) or use a Postgres-compatible dump.
 
-`sqlite> .open sqlite-sakila.db`   # creates the .db file
-`sqlite> .read sqlite-sakila-schema.sql`   # creates the database schema
-`sqlite> .read sqlite-sakila-insert-data.sql`   # inserts the data
-
-Therefore, the sqlite-sakila.db file can be directly loaded into SQLite3 and queries can be directly executed.
-Note: Data about the film_text table is not provided in the script files, thus the film_text table is empty. Instead the film_id, title and description fields are included in the film table.
+For convenience, you can also load sample data into a running Postgres instance using your preferred import tools or by running migration scripts that target PostgreSQL.

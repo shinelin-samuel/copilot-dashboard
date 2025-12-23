@@ -1,6 +1,5 @@
 import json
-import sqlite3
-from pathlib import Path
+import os
 from typing import Any, Callable, Dict, List
 
 import pandas as pd
@@ -12,48 +11,57 @@ from langgraph.prebuilt import InjectedState
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing_extensions import Annotated
 from app.logger import get_logger
+from sqlalchemy import create_engine, text
 
 logger = get_logger(__name__)
 
-# Database path
-DB_PATH = Path(__file__).parent.parent.parent / "data" / "sqlite-sakila.db"
+# Database URL (fallback kept for local development)
+DEFAULT_PG_URL = os.getenv("DEFAULT_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/copilot")
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_PG_URL)
+
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
 
 
-class SQLiteDatabase:
-    def __init__(self, db_path: Path):
-        self.db_path = db_path
+class SQLDatabase:
+    def __init__(self, engine):
+        self.engine = engine
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def execute_query(self, query: str) -> pd.DataFrame:
         """Execute a SQL query with retry logic."""
         logger.info("Entering execute_query")
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                return pd.read_sql_query(query, conn)
-        except sqlite3.Error as e:
-            raise Exception(f"Database error: {str(e)}")
+            with self.engine.connect() as conn:
+                return pd.read_sql_query(sql=text(query), con=conn)
         except Exception as e:
-            raise Exception(f"Unexpected error: {str(e)}")
+            raise Exception(f"Database error: {str(e)}")
 
     def get_schema(self) -> Dict[str, List[str]]:
-        """Get the database schema."""
+        """Get the database schema for PostgreSQL."""
         logger.info("Entering get_schema")
         schema = {}
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = cursor.fetchall()
-
-            for table in tables:
-                table_name = table[0]
-                cursor.execute(f"PRAGMA table_info({table_name});")
-                columns = cursor.fetchall()
-                schema[table_name] = [col[1] for col in columns]
+        tables_query = """
+            SELECT table_schema, table_name
+            FROM information_schema.tables
+            WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema');
+        """
+        with self.engine.connect() as conn:
+            result = conn.execute(text(tables_query))
+            for row in result:
+                schema_name, table_name = row
+                cols_q = text(
+                    "SELECT column_name FROM information_schema.columns WHERE table_schema = :schema AND table_name = :table ORDER BY ordinal_position"
+                )
+                cols_res = conn.execute(cols_q, {"schema": schema_name, "table": table_name})
+                columns = [c[0] for c in cols_res]
+                full_table_name = f"{schema_name}.{table_name}"
+                schema[full_table_name] = columns
         return schema
 
 
 # Initialize database
-db = SQLiteDatabase(DB_PATH)
+db = SQLDatabase(engine)
 
 
 @tool(description="Get the database schema", return_direct=False)
