@@ -212,18 +212,20 @@ async def get_actor_popularity(limit: int = 10, db: Session = Depends(get_db)):
 async def get_sales_overview(db: Session = Depends(get_db)):
     logger.info("Entering get_sales_overview")
     try:
+        # group by a date_trunc('month', ...) expression and format it with to_char in the SELECT
+        date_trunc_month = func.date_trunc('month', Payment.payment_date)
         # Get monthly sales data for the past year
         sales_data = (
             db.query(
-                func.strftime("%Y-%m", Payment.payment_date).label("date"),
+                func.to_char(date_trunc_month, "YYYY-MM").label("date"),
                 func.sum(Payment.amount).label("Sales"),
                 func.sum(Payment.amount * 0.7).label("Profit"),  # Assuming 70% profit margin
                 func.sum(Payment.amount * 0.3).label("Expenses"),  # Assuming 30% expenses
                 func.count(distinct(Rental.customer_id)).label("Customers"),
             )
             .join(Rental, Payment.rental_id == Rental.rental_id)
-            .group_by(func.strftime("%Y-%m", Payment.payment_date))
-            .order_by(func.strftime("%Y-%m", Payment.payment_date))
+            .group_by(date_trunc_month)
+            .order_by(date_trunc_month)
             .limit(12)
             .all()
         )
@@ -242,6 +244,7 @@ async def get_sales_overview(db: Session = Depends(get_db)):
             ],
         }
     except Exception as e:
+        logger.error(f"Error in get_sales_overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
