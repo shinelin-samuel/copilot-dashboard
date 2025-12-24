@@ -34,34 +34,41 @@ async def call_model(state: AgentState) -> Dict[str, List[AIMessage]]:
     Returns:
         dict: A dictionary containing the model's response message.
     """
-    configuration = Configuration.from_context()
+    try:
+        configuration = Configuration.from_context()
 
-    # Initialize the model with tool binding. Change the model or add more tools here.
-    model = load_chat_model(configuration.model).bind_tools(TOOLS)
+        # Initialize the model with tool binding. Change the model or add more tools here.
+        model = load_chat_model(configuration.model).bind_tools(TOOLS)
+        logger.info(f"Model loaded: {configuration.model} | {model}")
 
-    # Format the system prompt. Customize this to change the agent's behavior.
-    system_message = configuration.system_prompt
+        # Format the system prompt. Customize this to change the agent's behavior.
+        system_message = configuration.system_prompt
 
-    # Get the model's response
-    response = cast(
-        AIMessage,
-        await model.ainvoke([{"role": "system", "content": system_message}, *state.messages]),
-    )
+        logger.info(f"System message: {system_message}")
+        logger.info(f"state.messages: {state.messages}")
+        # Get the model's response
+        response = cast(
+            AIMessage,
+            await model.ainvoke([{"role": "system", "content": system_message}, *state.messages]),
+        )
 
-    # Handle the case when it's the last step and the model still wants to use a tool
-    if state.is_last_step and response.tool_calls:
-        return {
-            "messages": [
-                AIMessage(
-                    id=response.id,
-                    content="Sorry, I could not find an answer to your question in the specified number of steps.",
-                )
-            ]
-        }
+        # Handle the case when it's the last step and the model still wants to use a tool
+        if state.is_last_step and response.tool_calls:
+            return {
+                "messages": [
+                    AIMessage(
+                        id=response.id,
+                        content="Sorry, I could not find an answer to your question in the specified number of steps.",
+                    )
+                ]
+            }
 
-    # Return the model's response as a list to be added to existing messages
-    return {"messages": [response]}
-
+        # Return the model's response as a list to be added to existing messages
+        logger.info(f"Exiting call_model with LLM response: {response}")
+        return {"messages": [response]}
+    except Exception as e:
+        logger.error(f"Error in call_model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Define a new graph
 builder = StateGraph(AgentState, input=InputState, config_schema=Configuration)

@@ -22,8 +22,11 @@ class Configuration:
         },
     )
 
+    # replace with your inference profile ID or ARN created in Bedrock
+    # "model": "arn:aws:bedrock:us-east-1:123456789012:inference-profile/ip-xxxxxxxxxxxxxxxx",
+    # This requires Provisioned ARN created in AWS Bedrock
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
-        default="openai/gpt-4o",
+        default="anthropic.claude-sonnet-4-20250514-v1:0",
         metadata={
             "description": "The name of the language model to use for the agent's main interactions. "
             "Should be in the form: provider/model-name."
