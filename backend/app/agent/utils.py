@@ -76,7 +76,6 @@ def load_chat_model(model_name: str, model_kwargs: dict | None = None) -> Any:
     logger.info(f"Entering load_chat_model: {model_name}")
     model_kwargs = model_kwargs or {}
     provider = os.environ.get("MODEL_PROVIDER", "bedrock").lower()
-    #model_name = "anthropic.claude-3-sonnet-20240229-v1:0"
     if provider == "bedrock":
         try:
             # Try the Bedrock chat model import; adjust import path if your langchain version differs
@@ -101,10 +100,11 @@ def load_chat_model(model_name: str, model_kwargs: dict | None = None) -> Any:
             logger.warning("AWS credentials not set in environment; Bedrock client may fail.")
         # Instantiate Bedrock model; adjust constructor args for your langchain version
         try:
-            return ChatBedrockConverse(region_name=aws_region, client_kwargs={
-                "aws_access_key_id": aws_key,
-                "aws_secret_access_key": aws_secret,
-            }, model_id=model_name, **model_kwargs)
+            return ChatBedrockConverse(
+                model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
+                region_name=os.environ.get("AWS_REGION"),
+                temperature=0
+            )
         except TypeError:
             # Fallback: some LangChain versions use different param names
             return Bedrock(model_id=model_name, region_name=aws_region, **model_kwargs)

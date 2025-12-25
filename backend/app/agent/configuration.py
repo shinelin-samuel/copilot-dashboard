@@ -26,7 +26,7 @@ class Configuration:
     # "model": "arn:aws:bedrock:us-east-1:123456789012:inference-profile/ip-xxxxxxxxxxxxxxxx",
     # This requires Provisioned ARN created in AWS Bedrock
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
-        default="anthropic.claude-sonnet-4-20250514-v1:0",
+        default="anthropic.claude-3-haiku-20240307-v1:0",
         metadata={
             "description": "The name of the language model to use for the agent's main interactions. "
             "Should be in the form: provider/model-name."
